@@ -10,7 +10,8 @@ export default function AppUrlChecker() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [result, setResult] = useState(null);
-    console.log(API_KEY);
+    const [theme, setTheme] = useState('light'); // Initial theme set to "light"
+    //console.log(API_KEY);
 
 
     const checkUrl = async (url) => {
@@ -81,10 +82,19 @@ export default function AppUrlChecker() {
         setResult(null);
     };
 
+    const toggleTheme = () => {
+      const newTheme = theme === 'light' ? 'dark' : 'light';
+      setTheme(newTheme);
+      document.documentElement.setAttribute('data-theme', newTheme);
+    };
+
 
   return (
     <div>
-      <h1>URL Checker</h1>
+      <button onClick={toggleTheme} style={{ marginBottom: '20px' }}>
+        Change Theme
+      </button>
+      <h1 className='title'>URL Checker</h1>
       <UrlForm changeStates={changeStates} onSubmit={checkUrl} loading={loading} />
       {error && <p>Error: {error}</p>}
       {result && <UrlResult enteredUrl={enteredUrl} result={result} />}

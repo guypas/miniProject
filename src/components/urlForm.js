@@ -3,7 +3,7 @@ import { useRef } from 'react';
 
 export default function UrlForm({changeStates, onSubmit, loading }) {
 
-    //const [isValidUrl, setIsValidUrl] = useState(true);
+   
     const inputUrl = useRef();
 
     const handleSubmit = (e) => {
@@ -11,16 +11,7 @@ export default function UrlForm({changeStates, onSubmit, loading }) {
 
         const currentUrl = inputUrl.current.value;
 
-        // Regular expression to validate URL format
-        //const urlPattern = new RegExp('^(http(s)?:\\/\\/)?[\\w.-]+(\\.[a-zA-Z]{2,})+(\\/\\S*)?$');
-        //const isValid = urlPattern.test(currentUrl);
-        changeStates();
-        // if (!isValid) {
-        //     setIsValidUrl(false);
-        //     return;
-        //   }
-      
-          //setIsValidUrl(true);
+        
           onSubmit(currentUrl);
         };
 
