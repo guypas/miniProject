@@ -1,93 +1,90 @@
 import React, { useState } from 'react';
-import UrlForm from './urlForm'
-import UrlResult from './urlResult'
+import UrlForm from './urlForm';
+import UrlResult from './urlResult';
 
-const API_KEY = process.env.REACT_APP_VIRUSTOTAL_API_KEY; 
+const API_KEY = "0416fc1f62bfb5dcf199f2eaab6e27cdf22975567b785c47e2b5be94fe9665b2";
 
 export default function AppUrlChecker() {
+  const [enteredUrl, setEnteredUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
+  const [theme, setTheme] = useState('light'); // Initial theme set to "light"
 
-    const [enteredUrl, setEnteredUrl] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [result, setResult] = useState(null);
-    const [theme, setTheme] = useState('light'); // Initial theme set to "light"
-    //console.log(API_KEY);
+  const pollAnalysis = async (analysisId, retries = 5, delay = 2000) => {
+    for (let i = 0; i < retries; i++) {
+      const analysisResponse = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
+        method: 'GET',
+        headers: {
+          'x-apikey': API_KEY,
+        },
+      });
 
-
-    const checkUrl = async (url) => {
-      try {
-        setLoading(true);
-        setError(null);
-  
-        // Send POST request to VirusTotal to analyze the URL
-        const response = await fetch('https://www.virustotal.com/api/v3/urls', {
-          method: 'POST',
-          headers: {
-            'x-apikey': API_KEY,
-          },
-          body: new URLSearchParams({ url }),
-        });
-  
-        if (!response.ok) {
-          throw new Error('enter a valid url');
-        }
-  
-        // Parse the JSON response to get the analysis ID
-        const data = await response.json();
-        const analysisId = data.data.id;
-  
-        // Wait for a short period to allow VirusTotal to analyze the URL
-        await new Promise(resolve => setTimeout(resolve, 5000));
-  
-        // Fetch the analysis results using the analysis ID
-        const analysisResponse = await fetch(`https://www.virustotal.com/api/v3/analyses/${analysisId}`, {
-          method: 'GET',
-          headers: {
-            'x-apikey': API_KEY,
-          },
-        });
-  
-        if (!analysisResponse.ok) {
-          throw new Error('Failed to retrieve analysis results');
-        }
-  
-        // Parse the analysis results
+      if (analysisResponse.ok) {
         const analysisData = await analysisResponse.json();
-        console.log('Full analysis data:', analysisData); // Log the full response to understand its structure
-  
-        // Log specific parts to understand the structure better
-        console.log('Data:', analysisData.data);
-        console.log('Attributes:', analysisData.data.attributes);
-        console.log('Last analysis stats:', analysisData.data.attributes?.last_analysis_stats);
-  
-        // Check the result of the URL analysis
-        const resultData = analysisData.data.attributes;
-        const isComplete = resultData.status === "completed";
-        const isSafe = resultData.stats.malicious === 0;
-        //const message = resultData.stats.toString();
-        setResult({isComplete, isSafe });
-        
-  
-        setEnteredUrl(url); // Store the entered URL
-  
-      } catch (error) {
-        setError(error.message || 'Failed to check URL');
-      } finally {
-        setLoading(false);
+        if (analysisData.data.attributes.status === 'completed') {
+          return analysisData;
+        }
       }
-    };
 
-    const changeStates =  () => {
-        setError(null);
-        setResult(null);
-    };
+      // Wait for a specified delay before trying again
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
 
-    const toggleTheme = () => {
-      const newTheme = theme === 'light' ? 'dark' : 'light';
-      setTheme(newTheme);
-      document.documentElement.setAttribute('data-theme', newTheme);
-    };
+    throw new Error('Analysis did not complete in time , try again');
+  };
 
+  const checkUrl = async (url) => {
+    try {
+      setLoading(true);
+      setError(null);
+      setResult(null);
+
+      // Send POST request to VirusTotal to analyze the URL
+      const response = await fetch('https://www.virustotal.com/api/v3/urls', {
+        method: 'POST',
+        headers: {
+          'x-apikey': API_KEY,
+        },
+        body: new URLSearchParams({ url }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Enter a valid URL');
+      }
+
+      // Parse the JSON response to get the analysis ID
+      const data = await response.json();
+      const analysisId = data.data.id;
+
+      // Polling the analysis status
+      const analysisData = await pollAnalysis(analysisId);
+
+      // Check the result of the URL analysis
+      const resultData = analysisData.data.attributes;
+      const isSafe = resultData.stats.malicious === 0;
+
+      setResult({ isComplete: true, isSafe });
+      setEnteredUrl(url); // Store the entered URL
+
+    } catch (error) {
+      setError(error.message || 'Failed to check URL');
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const changeStates = () => {
+    setError(null);
+    setResult(null);
+  };
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   return (
     <div>
@@ -99,5 +96,5 @@ export default function AppUrlChecker() {
       {error && <p>Error: {error}</p>}
       {result && <UrlResult enteredUrl={enteredUrl} result={result} />}
     </div>
-  )
+  );
 }
