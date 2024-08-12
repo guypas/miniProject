@@ -3,14 +3,14 @@ import UrlForm from './urlForm';
 import UrlResult from './urlResult';
 
 
-const API_KEY = "0416fc1f62bfb5dcf199f2eaab6e27cdf22975567b785c47e2b5be94fe9665b2";
+const API_KEY = "0416fc1f62bfb5dcf199f2eaab6e27cdf22975567b785c47e2b5be94fe9665b2"; // the key we got from the site
 
 export default function AppUrlChecker() {
-  const [enteredUrl, setEnteredUrl] = useState('');
+  const [enteredUrl, setEnteredUrl] = useState(''); // for entering the url
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [result, setResult] = useState(null);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('light'); // for dark mode
 
   const pollAnalysis = async (analysisId, retries = 8, delay = 3000) => { // Function to poll VirusTotal API to check the status of the analysis
     for (let i = 0; i < retries; i++) {
@@ -24,7 +24,7 @@ export default function AppUrlChecker() {
 
         if (analysisResponse.ok) {
           const analysisData = await analysisResponse.json();
-          if (analysisData.data.attributes.status === 'completed') {
+          if (analysisData.data.attributes.status === 'completed') { // in case the procces completed
             return analysisData;
           }
         } else {
@@ -35,7 +35,7 @@ export default function AppUrlChecker() {
         console.error('Polling error:', error);
       }
 
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise(resolve => setTimeout(resolve, delay));  // Wait for a specified delay before trying again
     }
 
     throw new Error('Analysis did not complete in time. Please try again.');
@@ -45,7 +45,7 @@ export default function AppUrlChecker() {
   const checkUrl = async (url) => {
     try {
       setLoading(true);
-      setError(null);
+      setError(null); // clear previous errors
       setResult(null); // Clear previous results
 
       // Fetch the analysis results from VirusTotal API
@@ -69,14 +69,14 @@ export default function AppUrlChecker() {
       const resultData = analysisData.data.attributes;
       const isSafe = resultData.stats?.malicious === 0;
 
-      setResult({ isComplete: true, isSafe });
+      setResult({ isComplete: true, isSafe });  // Set result state with analysis outcome
       setEnteredUrl(url);
 
     } catch (error) {
       setError(error.message || 'Failed to check URL');
-      setResult(null);
+      setResult(null);  // Clear result state on error
     } finally {
-      setLoading(false);
+      setLoading(false); // Set loading to false once the process is complete
     }
   };
 
